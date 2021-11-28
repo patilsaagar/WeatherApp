@@ -7,7 +7,7 @@
 
 import UIKit
 
-class WeatherDetailsTableViewCell: UITableViewCell, Formattable {    
+class WeatherDetailsTableViewCell: UITableViewCell {
     static let cellIdentifier = "WeatherDetailsTableViewCell"
 
     @IBOutlet weak var dayLabel: UILabel!
@@ -15,6 +15,7 @@ class WeatherDetailsTableViewCell: UITableViewCell, Formattable {
     @IBOutlet weak var weatherIconImageView: UIImageView!
     @IBOutlet weak var maximumTemperature: UILabel!
     
+    @IBOutlet weak var iConDescriptionLabel: UILabel!
     override func awakeFromNib() {
         super.awakeFromNib()
     }
@@ -26,19 +27,24 @@ class WeatherDetailsTableViewCell: UITableViewCell, Formattable {
     static func nib() -> UINib {
         return UINib(nibName: WeatherDetailsTableViewCell.cellIdentifier, bundle: nil)
     }
-    
-    func configureCell(with weatherData: Forcast, index: Int) {
-        self.dayLabel.text = self.convertDate(date: weatherData.daily[index].dt)
-        self.minimumTemperature.text =  (convertTemperatureToDegreeCelsius(value: weatherData.daily[index].temp.min))
-        self.maximumTemperature.text = (convertTemperatureToDegreeCelsius(value: weatherData.daily[index].temp.max))
-       // self.weatherIconImageView.image = UIImage() weatherData.daily[indexPath.row].weather[indexPath.row].icon
-    }
-    
-    private func convertDate(date: Date?) -> String{
-        guard let date = date else { return "" }
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "EEE"
+}
+
+extension WeatherDetailsTableViewCell: Covertable {
+    /// Method to configure table custom cell
+    /// - Parameters:
+    ///   - weatherData: Weather data to setup cell values
+    ///   - index: index reference for tableview
+    func configureCell(with weatherData: [Daily], index: Int) {
+        self.dayLabel.text = self.convertDate(date: weatherData[index].dt)
+        self.minimumTemperature.text =  "\(Int(weatherData[index].temp.min))℃"
+        self.maximumTemperature.text = "\(Int(weatherData[index].temp.max))℃"
         
-        return dateFormatter.string(from: date)
+        let iconName = weatherData[index].weather[0].icon
+        let iconURL = "https://openweathermap.org/img/wn/\(iconName)@2x.png"
+        
+        guard let url = URL(string: iconURL) else { return }
+        self.weatherIconImageView.loadImageFrom(url: url)
+        
+        self.iConDescriptionLabel.text = weatherData[index].weather[0].description
     }
 }

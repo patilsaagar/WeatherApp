@@ -6,13 +6,21 @@
 //
 
 import UIKit
+import CoreLocation
 
 protocol WeatherViewProtocol: AnyObject {
     var weatherData: WeatherDataProtocol? { get set }
-    func createWeatherData(details: Forcast, cityName: String)
+    func setupWeatherUI(details: [Daily], cityName: String)
 }
 
-class WeatherViewController: UIViewController, WeatherViewProtocol, Formattable {
+class WeatherViewController: UIViewController, WeatherViewProtocol {
+    @IBOutlet weak var cityNameLabel: UILabel!
+    @IBOutlet weak var currentTemperatureLabel: UILabel!
+    @IBOutlet weak var descriptionLabel: UILabel!
+    @IBOutlet weak var lowTemperatureLabel: UILabel!
+    @IBOutlet weak var highTemperatureLabel: UILabel!
+    @IBOutlet weak var searchCityTextField: UITextField!
+    @IBOutlet weak var temperatureDetailsStackView: UIStackView!
     @IBOutlet weak var dailyWeatherDataTableView: UITableView! {
         didSet {
             dailyWeatherDataTableView.register(WeatherDetailsTableViewCell.nib(), forCellReuseIdentifier: WeatherDetailsTableViewCell.cellIdentifier)
@@ -21,51 +29,47 @@ class WeatherViewController: UIViewController, WeatherViewProtocol, Formattable 
             dailyWeatherDataTableView.backgroundColor  = .clear
         }
     }
-    
-    @IBOutlet weak var cityNameLabel: UILabel!
-    @IBOutlet weak var currentTemperatureLabel: UILabel!
-    @IBOutlet weak var descriptionLabel: UILabel!
-    @IBOutlet weak var lowTemperatureLabel: UILabel!
-    @IBOutlet weak var highTemperatureLabel: UILabel!
-    @IBOutlet weak var searchCityTextField: UITextField!
-    @IBOutlet weak var temperatureDetailsStackView: UIStackView!
-    
-    private var weatherDetails: Forcast?
+
+    private var weatherDetails: [Daily]?
     var weatherData: WeatherDataProtocol?
     
+    // MARK: View Life cycle method
     override func viewDidLoad() {
         super.viewDidLoad()
         self.weatherData = WeatherDataLoader()
         self.weatherData?.attachView(view: self)
     }
     
-    func createWeatherData(details: Forcast, cityName: String) {
+    
+    /// Method which will set the UI with weather details
+    /// - Parameters:
+    ///   - details: Weather details returnd from API
+    ///   - cityName: City name for which weather will display
+    func setupWeatherUI(details: [Daily], cityName: String) {
         self.weatherDetails = details
         DispatchQueue.main.async {
-            self.dailyWeatherDataTableView.reloadData()
             self.cityNameLabel.text = cityName
             
-            if let minimumTemperature = self.weatherDetails?.daily.first?.temp.min,
-               let maximumTemperature = self.weatherDetails?.daily.first?.temp.max {
-                let lowTemperature = self.convertTemperatureToDegreeCelsius(value: minimumTemperature)
-                let highTemperature = self.convertTemperatureToDegreeCelsius(value: maximumTemperature)
+            if let minimumTemperature = self.weatherDetails?.first?.temp.min,
+               let maximumTemperature = self.weatherDetails?.first?.temp.max {
+                let lowTemperature = minimumTemperature
+                let highTemperature = maximumTemperature
                 
-                self.lowTemperatureLabel.text = "L: " + "\(lowTemperature)"
-                self.highTemperatureLabel.text = "H: " + "\(highTemperature)"
+                self.lowTemperatureLabel.text = "L: " + "\(Int(lowTemperature))℃"
+                self.highTemperatureLabel.text = "H: " + "\(Int(highTemperature))℃"
             }
+            self.descriptionLabel.text = self.weatherDetails?.first?.weather[0].description
+            self.dailyWeatherDataTableView.reloadData()
         }
     }
 }
 
-extension WeatherViewController: UITableViewDataSource, UITableViewDelegate {
+// MARK: Tablebiew DataSource methods extension
+extension WeatherViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return self.weatherDetails?.daily.count ?? 0
+        return self.weatherDetails?.count ?? 0
     }
-    
-    func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
-    }
-    
+        
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let weatherDetailCell = tableView.dequeueReusableCell(withIdentifier: WeatherDetailsTableViewCell.cellIdentifier, for: indexPath)
                 as? WeatherDetailsTableViewCell,
@@ -77,18 +81,23 @@ extension WeatherViewController: UITableViewDataSource, UITableViewDelegate {
         weatherDetailCell.backgroundColor = .clear
         return weatherDetailCell
     }
-    
+}
+
+// MARK: Tablebiew delegate method extension
+extension WeatherViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 100
     }
 }
 
+// MARK: Textfield delegate method extension
 extension WeatherViewController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
         if let cityName = textField.text {
-            self.weatherData?.getCityWeatherData(cityName: cityName)
+            self.weatherData?.getCityCoordinate(from: cityName)
         }
+        textField.text = ""
         return true
     }
 }

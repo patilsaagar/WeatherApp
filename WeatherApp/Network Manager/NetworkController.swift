@@ -18,6 +18,7 @@ class NetworkController {
         self.baseURL = baseURL
     }
     
+    // Enum: Error type
     enum FetchError : Error {
         case network(Error)
         case noResponse
@@ -27,6 +28,10 @@ class NetworkController {
         case unexpectedResonse(Int)
     }
     
+    /// Function to make service call
+    /// - Parameters:
+    ///   - anObject: NetworkControllerDelegate protocol adopting class object
+    ///   - completion: completion to handle success/ error data
     func fetchWeatherData(anObject: NetworkControllerDelegate, completion: @escaping (Result<Forcast, FetchError>) -> Void) {
         anObject.fetch(baseUrl: self.baseURL) { result in
             switch result {
