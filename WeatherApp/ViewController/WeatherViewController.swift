@@ -36,7 +36,12 @@ class WeatherViewController: UIViewController, WeatherViewProtocol {
     // MARK: View Life cycle method
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.weatherData = WeatherDataLoader()
+        let networkController = NetworkManager()
+        let service = WeatherService()
+        service.networkController = networkController
+        let weatherData = WeatherDataPresenter()
+        weatherData.service = service
+        self.weatherData = weatherData
         self.weatherData?.attachView(view: self)
     }
     
@@ -48,7 +53,7 @@ class WeatherViewController: UIViewController, WeatherViewProtocol {
     func setupWeatherUI(details: [Daily], cityName: String) {
         self.weatherDetails = details
         DispatchQueue.main.async {
-            self.cityNameLabel.text = cityName
+            self.cityNameLabel.text = cityName.capitalized
             
             if let minimumTemperature = self.weatherDetails?.first?.temp.min,
                let maximumTemperature = self.weatherDetails?.first?.temp.max {
@@ -58,7 +63,7 @@ class WeatherViewController: UIViewController, WeatherViewProtocol {
                 self.lowTemperatureLabel.text = "L: " + "\(Int(lowTemperature))℃"
                 self.highTemperatureLabel.text = "H: " + "\(Int(highTemperature))℃"
             }
-            self.descriptionLabel.text = self.weatherDetails?.first?.weather[0].description
+            self.descriptionLabel.text = self.weatherDetails?.first?.weather[0].description.capitalized
             self.dailyWeatherDataTableView.reloadData()
         }
     }

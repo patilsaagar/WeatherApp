@@ -45,6 +45,6 @@ extension WeatherDetailsTableViewCell: Covertable {
         guard let url = URL(string: iconURL) else { return }
         self.weatherIconImageView.loadImageFrom(url: url)
         
-        self.iConDescriptionLabel.text = weatherData[index].weather[0].description
+        self.iConDescriptionLabel.text = weatherData[index].weather[0].description.capitalized
     }
 }
