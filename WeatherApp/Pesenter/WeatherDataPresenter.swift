@@ -26,7 +26,7 @@ class WeatherDataPresenter: WeatherDataProtocol {
     }
     
     func getCityWeatherData(cityName: String, cityLatitude: Double, longitude: Double) {
-        service?.getCityWeatherData(cityName: cityName, cityLatitude: cityLatitude, longitude: longitude, completion: { result in
+        service?.getCityWeatherData(cityName: cityName, latitude: cityLatitude, longitude: longitude, completion: { result in
             switch result {
             case .success(let weatherDetails):
                 self.weatherView?.setupWeatherUI(details: weatherDetails.daily, cityName: cityName)

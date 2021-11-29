@@ -9,7 +9,7 @@ import CoreLocation
 
 protocol WeatherServiceProtocol {
     func geocodeAddressString(from cityName: String, completion: @escaping CLGeocodeCompletionHandler)
-    func getCityWeatherData(cityName: String, cityLatitude: Double, longitude: Double, completion: @escaping (Result<Forcast, NetworkManager.FetchError>) -> Void)
+    func getCityWeatherData(cityName: String, latitude: Double, longitude: Double, completion: @escaping (Result<Forcast, NetworkManager.FetchError>) -> Void)
     var networkController: NetworkControllerProtocol? { get set }
 }
 
@@ -21,8 +21,11 @@ final class WeatherService: WeatherServiceProtocol {
         }
     }
     
-    func getCityWeatherData(cityName: String, cityLatitude: Double, longitude: Double, completion: @escaping (Result<Forcast, NetworkManager.FetchError>) -> Void) {
-        let baseURL = "https://api.openweathermap.org/data/2.5/onecall?lat=\(cityLatitude)&lon=\(longitude)&exclude=hourly,minutely,current,alert&appid=63d13625d03f61d44d76f161f7dbb7c2&units=metric"
+    func getCityWeatherData(cityName: String,
+                            latitude: Double,
+                            longitude: Double,
+                            completion: @escaping (Result<Forcast, NetworkManager.FetchError>) -> Void) {
+        let baseURL = "https://api.openweathermap.org/data/2.5/onecall?lat=\(latitude)&lon=\(longitude)&exclude=hourly,minutely,current,alert&appid=63d13625d03f61d44d76f161f7dbb7c2&units=metric"
         
         self.networkController?.fetch(baseUrl: baseURL, completion: { expectedData, expectedResponse, error in
             var result: Result<Data?, Error>
@@ -31,14 +34,10 @@ final class WeatherService: WeatherServiceProtocol {
                 result = .failure(NetworkManager.FetchError.network(error!))
             }
             
-            if let _ = expectedResponse as? HTTPURLResponse  {
+            if let _ = expectedResponse  {
                 result = .failure(NetworkManager.FetchError.missingResponse)
             }
-            
-            //            if (200...299).contains(expectedResponse.)  {
-            //                result = .failure(NetworkController.FetchError.unexpectedResonse(expectedResponse.statusCode))
-            //            }
-            
+                    
             if let finalData = expectedData  {
                 result = .success(finalData)
             } else {
